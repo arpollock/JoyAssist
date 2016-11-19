@@ -29,6 +29,21 @@ S                                      J
 --R----Q----P----O----N----M----L----K--
 )";
 
+string circle_symbols = R"(
+#   %  $   .   ,   !   ?
+
+&                      :
+
+$                      ;
+
+/                      "
+
+*                      '
+
+@                      -
++ [  ]  {   }   (   )  =
+)";
+
 const char* RESET = "\033[0m";
 const char* BOLD = "\033[4m";
 const char* RED = "\033[31m";
@@ -61,7 +76,7 @@ void select_letter(char c) {
     }
 
     cout << new_circle << endl;
-    cout << "Selected Letter: " << (char)toupper(c) << endl;
+    //cout << "Selected Letter: " << (char)toupper(c) << endl;
 }
 
 #endif

@@ -109,10 +109,12 @@ void mouse_mode_exec(vector<int> params) {
             click_count++;
         }
 
-        if (click_count == 2) {
-            mouse_mode = !mouse_mode;
-            click_count = 0;
-        }
+    }
+
+    if (click_count == 3) {
+        mouse_mode = !mouse_mode;
+        click_count = 0;
+        return;
     }
 
     if (clicked) {
@@ -256,9 +258,14 @@ int key_code_from_str(string c) {
     return 0;
 }
 
+bool shifted = false;
+
 void press_key(string s) {
     CGEventRef press = CGEventCreateKeyboardEvent( NULL, (CGKeyCode)key_code_from_str(s),
             true);
+    if (shifted) {
+        CGEventSetFlags(press, kCGEventFlagMaskShift);
+    }
     CGEventPost(kCGHIDEventTap, press);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
@@ -268,6 +275,12 @@ void press_key(string s) {
 
     CFRelease(press);
     CFRelease(depress);
+
+    if (shifted) {
+        CGEventRef shift_lift = CGEventCreateKeyboardEvent(NULL, (CGKeyCode)56, false);
+        CGEventPost(kCGSessionEventTap, shift_lift);
+        shifted = false;
+    }
 }
 
 
@@ -356,6 +369,9 @@ void kb_gesture(vector<int> params) {
     x = round(x * 10.0 ) / 10.0;
     y = round(y * 10.0 ) / 10.0;
 
+    if (mouse_mode)
+        return;
+
     if (x < 0.5) {
         press_key("SPACE");
         gesture_mode = false;
@@ -368,9 +384,12 @@ void kb_gesture(vector<int> params) {
         depressed = true;
         click_count = 0;
     }
-    // TODO: shift
-    else if (y > 0.5) { }
-    //press_key("");
+    else if (y > 0.5) {
+        gesture_mode = false;
+        depressed = true;
+        click_count = 0;
+        shifted = !shifted;
+    }
     else if (y < 0.5) {
         press_key("ENTER");
         gesture_mode = false;
@@ -378,13 +397,16 @@ void kb_gesture(vector<int> params) {
         click_count = 0;
     }
     else {
-        click_count++;
-        if (click_count == 2) {
-            mouse_mode = !mouse_mode;
-            click_count = 0;
+        if (!last_clicked && params.at(2) == 0) {
+            click_count++;
         }
+        last_clicked = (params.at(2) == 0);
     }
 
+    if (click_count == 3) {
+        mouse_mode = !mouse_mode;
+        click_count = 0;
+    }
 }
 
 void exec_cmd(vector<int> params) {
@@ -398,14 +420,14 @@ void exec_cmd(vector<int> params) {
         new_params = params;
 
         //mouse_mode_exec(params);
-        if (gesture_mode) {
-            kb_gesture(params);
+        if (!mouse_mode) {
+            if (gesture_mode)
+                kb_gesture(params);
+            else
+                kb_mode_exec(params);
         }
         else {
-            if (!mouse_mode)
-                kb_mode_exec(params);
-            else
-                mouse_mode_exec(params);
+            mouse_mode_exec(params);
         }
     }
 }
