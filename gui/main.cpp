@@ -88,12 +88,12 @@ int last_y = 0;
 bool mouse_mode = false;
 
 void mouse_mode_exec(vector<int> params) {
-    int SCALE = 7;
+    int SCALE = 20;
 
     int x =  (((double)params.at(0) - X_REST) / 1023.0) * SCALE;
     int y =  (((double)params.at(1) - Y_REST) / 1023.0) * SCALE;
 
-    MoveMouse(x*SCALE, y*SCALE);
+    MoveMouse(x, y);
 
     bool clicked = (params.at(2) == 0) && last_clicked;
 
@@ -467,10 +467,6 @@ void kb_gesture(vector<int> params) {
 void exec_cmd(vector<int> params) {
     if (params.size() == 3) {
         int p0 = params.at(0);
-
-        if (p0 == 0 || p0 == 6 || p0 == 96)
-            return;
-
         new_params = params;
 
         if (!mouse_mode) {
