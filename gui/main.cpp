@@ -183,6 +183,19 @@ int key_code_from_str(string c) {
     if (c == "-") { return 27; }
     if (c == "8") { return 28; }
     if (c == "0") { return 29; }
+
+    if (c == "!") { return 18; }
+    if (c == "@") { return 19; }
+    if (c == "#") { return 20; }
+    if (c == "$") { return 21; }
+    if (c == "^") { return 22; }
+    if (c == "%") { return 23; }
+    if (c == "(") { return 25; }
+    if (c == "&") { return 26; }
+    if (c == "*") { return 28; }
+    if (c == ")") { return 29; }
+    if (c == "\"") { return 39; }
+
     if (c == "") { return 30; }
     if (c == "o") { return 31; }
     if (c == "u") { return 32; }
@@ -212,23 +225,22 @@ int key_code_from_str(string c) {
     // have been helpful for Apple to have a document with them all listed
 
     //if (c == ".") { return 65; }
-    //if (c == "*") { return 67; }
-    //if (c == "+") { return 69; }
-    //if (c == "CLEAR") { return 71; }
+    if (c == "*") { return 67; }
+    if (c == "+") { return 69; }
+    if (c == "CLEAR") { return 71; }
     //if (c == "/") { return 75; }
     //if (c == "ENTER") { return 76;  // numberpad on full kbd }
-    //if (c == "=") { return 78; }
-    //if (c == "=") { return 81; }
-    //if (c == "0") { return 82; }
-    //if (c == "1") { return 83; }
-    //if (c == "2") { return 84; }
-    //if (c == "3") { return 85; }
-    //if (c == "4") { return 86; }
-    //if (c == "5") { return 87; }
-    //if (c == "6") { return 88; }
-    //if (c == "7") { return 89; }
-    //if (c == "8") { return 91; }
-    //if (c == "9") { return 92; }
+    if (c == "=") { return 78; }
+    if (c == "0") { return 82; }
+    if (c == "1") { return 83; }
+    if (c == "2") { return 84; }
+    if (c == "3") { return 85; }
+    if (c == "4") { return 86; }
+    if (c == "5") { return 87; }
+    if (c == "6") { return 88; }
+    if (c == "7") { return 89; }
+    if (c == "8") { return 91; }
+    if (c == "9") { return 92; }
     //if (c == "F5") { return 96; }
     //if (c == "F6") { return 97; }
     //if (c == "F7") { return 98; }
@@ -258,14 +270,21 @@ int key_code_from_str(string c) {
     return 0;
 }
 
-bool shifted = false;
+int shift_level = 0;
 
 void press_key(string s) {
+    bool shift_key = (s == "!" || s == "@" || s == "#" || s == "$" || s == "%"
+            || s == "^" || s == "&" || s == "*" || s == "(" || s == ")");
+
+
     CGEventRef press = CGEventCreateKeyboardEvent( NULL, (CGKeyCode)key_code_from_str(s),
             true);
-    if (shifted) {
+    CGEventRef shift_lift = CGEventCreateKeyboardEvent(NULL, (CGKeyCode)56, false);
+
+    if (shift_level == 1 || shift_key) {
         CGEventSetFlags(press, kCGEventFlagMaskShift);
     }
+
     CGEventPost(kCGHIDEventTap, press);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
@@ -276,11 +295,12 @@ void press_key(string s) {
     CFRelease(press);
     CFRelease(depress);
 
-    if (shifted) {
-        CGEventRef shift_lift = CGEventCreateKeyboardEvent(NULL, (CGKeyCode)56, false);
-        CGEventPost(kCGSessionEventTap, shift_lift);
-        shifted = false;
-    }
+    if (shift_level == 1)
+        shift_level = 0;
+
+    CGEventPost(kCGSessionEventTap, shift_lift);
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    CFRelease(shift_lift);
 }
 
 
@@ -299,6 +319,13 @@ void kb_mode_exec(vector<int> params) {
     string col1 = "JIHGF";
     string col2 = "STUVW";
     string row2 = "KLMNOPQR";
+
+    if (shift_level > 1) {
+        row1 = "09876U54321";
+        col1 = ")!?R,.";
+        col2 = "+-=L\"'";
+        row2 = "(@$D&/#";
+    }
 
     double x = ((double)params.at(0)) / 1023.0;
     double y = ((double)params.at(1)) / 1023.0;
@@ -346,14 +373,14 @@ void kb_mode_exec(vector<int> params) {
     if (first_active != -1) {
         selection = use_me[round((use_me.length()-1) * use_axis)];
     }
-    select_letter(selection);
+    select_ascii(selection, shift_level);
 
     if (selection != ' ')
         last_letter = selection;
 
     string s(1, tolower(last_letter));
     //cout << s << endl;
-    cout << "SHIFT " << ((shifted) ? "ON" : "OFF") << endl;
+    cout << "SHIFT " << ((shift_level > 0) ? "ON" : "OFF") << endl;
     if (clicked && !depressed) {
         press_key(s);
     }
@@ -387,7 +414,9 @@ void kb_gesture(vector<int> params) {
         gesture_mode = false;
         depressed = true;
         click_count = 0;
-        shifted = !shifted;
+        shift_level++;
+        if (shift_level > 2)
+            shift_level = 0;
     }
     else if (y < 0.5) {
         press_key("ENTER");

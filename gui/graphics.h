@@ -10,38 +10,44 @@ using namespace std;
 
 // HAHA it's not a circle
 string circle = R"(
---X----Y----Z----A----B----C----D----E--
-|                                      |
-|                                      |
+  X    Y    Z    A    B    C    D    E
+
+
 W                                      F
-|                                      |
-|                                      |
+
+
 V                                      G
-|                                      |
-|                  _                   |
+
+                   _
 U                                      H
-|                                      |
-|                                      |
+
+
 T                                      I
-|                                      |
-|                                      |
+
+
 S                                      J
---R----Q----P----O----N----M----L----K--
+  R    Q    P    O    N    M    L    K
 )";
 
 string circle_symbols = R"(
-#   %  $   .   ,   !   ?
+  1  2  3  4  5    U    6  7  8  9  0
 
-&                      :
+'                                     .
 
-$                      ;
 
-/                      "
+"                                     ,
 
-*                      '
 
-@                      -
-+ [  ]  {   }   (   )  =
+L                                     R
+
+
+=                                     ?
+
+
+-                                     !
+
++                                     )
+   #    /    &    D    $    @    (
 )";
 
 const char* RESET = "\033[0m";
@@ -53,13 +59,25 @@ const char* BLUE = "\033[34m";
 const char* YELLOW = "\033[33m";
 
 char last_letter_visual = ' ';
-void select_letter(char c) {
+
+void select_ascii(char c, int shift_level) {
+    string orig_circle = circle;
+    if (shift_level > 1) {
+        orig_circle = circle_symbols;
+    }
+
     string new_circle;
-    for (char find : circle) {
+
+    for (char find : orig_circle) {
         if (find == toupper(c) && c != ' ') {
             new_circle += RED;
             //new_circle += BOLD;
-            new_circle += find;
+            if (shift_level == 0) {
+                new_circle += tolower(find);
+            }
+            else {
+                new_circle += find;
+            }
             new_circle += RESET;
             last_letter_visual = find;
         }
@@ -70,13 +88,16 @@ void select_letter(char c) {
                 new_circle += toupper(c);
         }
         else {
-            new_circle += find;
+            if (shift_level == 0) {
+                new_circle += tolower(find);
+            }
+            else {
+                new_circle += find;
+            }
         }
-
     }
 
     cout << new_circle << endl;
-    //cout << "Selected Letter: " << (char)toupper(c) << endl;
 }
 
 #endif
