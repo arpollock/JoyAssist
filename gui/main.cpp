@@ -332,7 +332,6 @@ void kb_mode_exec(vector<int> params) {
             use_me = col1;
 
         use_axis = y;
-        //cout << "Using Cols" << endl;
     }
 
     if (first_active == 1) {
@@ -342,7 +341,6 @@ void kb_mode_exec(vector<int> params) {
             use_me = row2;
 
         use_axis = x;
-        //cout << "Using Rows" << endl;
     }
 
     if (first_active != -1) {
@@ -354,7 +352,8 @@ void kb_mode_exec(vector<int> params) {
         last_letter = selection;
 
     string s(1, tolower(last_letter));
-    cout << s << endl;
+    //cout << s << endl;
+    cout << "SHIFT " << ((shifted) ? "ON" : "OFF") << endl;
     if (clicked && !depressed) {
         press_key(s);
     }
