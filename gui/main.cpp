@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <chrono>
 #include <thread>
+#include <math.h>
 #include "graphics.h"
 
 using namespace std;
@@ -60,16 +61,12 @@ vector<int> parse_cmd(string cmd) {
         if (c != ',' && c != '\r' && c != '\n') {
             new_num += c;
         }
-        else if (c == ',' || c == '\n') {
+        else if (c == ',' || c == '\r') {
             params.push_back(atoi(new_num.c_str()));
             new_num = "";
 
-            if (c == '\n') {
-                if (params.size() != 3) {
-                    params.clear();
-                }
+            if (c == '\r')
                 return params;
-            }
         }
     }
 
@@ -133,6 +130,7 @@ void clear_display() {
     }
 }
 
+int first_active = -1;
 void kb_mode_exec(vector<int> params) {
     clear_display();
 
@@ -141,28 +139,53 @@ void kb_mode_exec(vector<int> params) {
     string col2 = "STUVW";
     string row2 = "RQPONMLK";
 
-    double x = ((double)params.at(0)) / 1023.0;
-    double y = ((double)params.at(1)) / 1023.0;
-    //double x = ((double)params.at(0) - X_REST) / 1023.0;
-    //double y = ((double)params.at(1) - Y_REST) / 1023.0;
+    //double x = ((double)params.at(0)) / 1023.0;
+    //double y = ((double)params.at(1)) / 1023.0;
+    double x = ((double)params.at(0) - X_REST) / 1023.0;
+    double y = ((double)params.at(1) - Y_REST) / 1023.0;
+    x = round(x * 10.0 ) / 10.0;
+    y = round(y * 10.0 ) / 10.0;
+
+    if (x != 0 && y == 0) {
+        first_active = 0;
+    }
+    else if (x == 0 && y != 0) {
+        first_active = 1;
+    }
+    else if (x == 0 && y == 0) {
+        first_active = -1;
+    }
 
     char selection = ' ';
+    string use_me = "";
+    double use_axis = 0;
 
-    if (params.at(0) > 900) {
-        selection = col2[col2.length() * y];
-    }
-    else if (params.at(0) < 100) {
-        selection = col1[col1.length() * y];
-    }
-    else if (params.at(1) > 900) {
-        selection = row1[row1.length() * x];
-    }
-    else if (params.at(1) < 100) {
-        selection = row2[row2.length() * x];
+    // use columns, x was moved first
+    if (first_active == 0) {
+        if (x > 0.2)
+            use_me = col2;
+        else if (x < -0.2)
+            use_me = col1;
+
+        use_axis = y;
+        cout << "Using Cols" << endl;
     }
 
-    cout << x << "," << y << endl;
+    if (first_active == 1) {
+        if (y > 0.2)
+            use_me = row1;
+        else if (y < -0.2)
+            use_me = row2;
+
+        use_axis = x;
+        cout << "Using Rows" << endl;
+    }
+
+    if (first_active != -1) {
+        selection = use_me[use_me.length() * use_axis];
+    }
     select_letter(selection);
+    cout << x << "," << y << endl;
 }
 
 void exec_cmd(vector<int> params) {
@@ -184,16 +207,25 @@ int main() {
     struct sp_event_set *ev = nullptr;
     init_serial(ev);
 
-    for (;;) {
-        char buf[256] = {0};
-        sp_wait(ev, 0);
-        int res = sp_blocking_read_next(port_ptr, buf, sizeof(buf), 50);
+    //int used = 0;
+    string cmd = "";
 
+    for (;;) {
+        char buf[1] = {0};
+        sp_wait(ev, 0);
+        int res = sp_blocking_read_next(port_ptr, buf, 1, 50);
+
+        //used += res;
         if (res > 0) {
+            cmd += (char)buf[0];
+        }
+
+        if (buf[0] == '\r') {
             //std::this_thread::sleep_for(std::chrono::milliseconds(20));
-            string cmd = string(buf);
             vector<int> params = parse_cmd(cmd);
             exec_cmd(params);
+            //cout << cmd;
+            cmd = "";
         }
         else {
             //cout << "ERROR, NUGGET: " << res << endl;
