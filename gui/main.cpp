@@ -79,6 +79,11 @@ vector<int> get_params() {
 }
 
 bool last_clicked = false;
+int click_count = 0;
+
+int last_x = 0;
+int last_y = 0;
+bool mouse_mode = false;
 
 void mouse_mode_exec(vector<int> params) {
     int SCALE = 7;
@@ -97,6 +102,17 @@ void mouse_mode_exec(vector<int> params) {
             );
     CGEventPost(kCGHIDEventTap, move);
 
+    if (!last_clicked && params.at(2) == 0) {
+        if (abs(last_x - MPOS_X) < 15 || abs(last_y - MPOS_Y) < 15) {
+            click_count++;
+        }
+
+        if (click_count == 2) {
+            mouse_mode = !mouse_mode;
+            click_count = 0;
+        }
+    }
+
     if (clicked) {
         // press left mouse button
         CGEventRef click_down = CGEventCreateMouseEvent(
@@ -107,6 +123,7 @@ void mouse_mode_exec(vector<int> params) {
 
         CGEventPost(kCGHIDEventTap, click_down);
         CFRelease(click_down);
+
     } else if (last_clicked) {
         // release left mouse button
         CGEventRef click_up = CGEventCreateMouseEvent(
@@ -120,6 +137,9 @@ void mouse_mode_exec(vector<int> params) {
     }
 
     last_clicked = (params.at(2) == 0);
+
+    last_x = MPOS_X;
+    last_y = MPOS_Y;
 
     CFRelease(move);
 }
@@ -234,10 +254,26 @@ int key_code_from_str(string c) {
     return 0;
 }
 
+void press_key(string s) {
+    CGEventRef press = CGEventCreateKeyboardEvent( NULL, (CGKeyCode)key_code_from_str(s),
+            true);
+    CGEventPost(kCGHIDEventTap, press);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    CGEventRef depress = CGEventCreateKeyboardEvent( NULL, (CGKeyCode)key_code_from_str(s),
+            false);
+    CGEventPost(kCGHIDEventTap, depress);
+
+    CFRelease(press);
+    CFRelease(depress);
+}
+
+
 int first_active = -1;
 char last_letter = ' ';
 
 bool depressed = false;
+bool gesture_mode = false;
 
 void kb_mode_exec(vector<int> params) {
     clear_display();
@@ -263,6 +299,10 @@ void kb_mode_exec(vector<int> params) {
     }
     else if (x == 0.5 && y == 0.5) {
         first_active = -1;
+        if (clicked) {
+            gesture_mode = true;
+            return;
+        }
     }
 
     char selection = ' ';
@@ -301,21 +341,48 @@ void kb_mode_exec(vector<int> params) {
     string s(1, tolower(last_letter));
     cout << s << endl;
     if (clicked && !depressed) {
-
-        CGEventRef press = CGEventCreateKeyboardEvent( NULL, (CGKeyCode)key_code_from_str(s),
-                true);
-        CGEventPost(kCGHIDEventTap, press);
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
-        CGEventRef depress = CGEventCreateKeyboardEvent( NULL, (CGKeyCode)key_code_from_str(s),
-                false);
-        CGEventPost(kCGHIDEventTap, depress);
-
-        CFRelease(press);
-        CFRelease(depress);
+        press_key(s);
     }
 
     depressed = clicked;
+}
+
+void kb_gesture(vector<int> params) {
+    double x = ((double)params.at(0)) / 1023.0;
+    double y = ((double)params.at(1)) / 1023.0;
+
+    x = round(x * 10.0 ) / 10.0;
+    y = round(y * 10.0 ) / 10.0;
+
+    if (x < 0.5) {
+        press_key("SPACE");
+        gesture_mode = false;
+        depressed = true;
+        click_count = 0;
+    }
+    else if (x > 0.5) {
+        press_key("DELETE");
+        gesture_mode = false;
+        depressed = true;
+        click_count = 0;
+    }
+    // TODO: shift
+    else if (y > 0.5) { }
+    //press_key("");
+    else if (y < 0.5) {
+        press_key("ENTER");
+        gesture_mode = false;
+        depressed = true;
+        click_count = 0;
+    }
+    else {
+        click_count++;
+        if (click_count == 2) {
+            mouse_mode = !mouse_mode;
+            click_count = 0;
+        }
+    }
+
 }
 
 void exec_cmd(vector<int> params) {
@@ -329,7 +396,15 @@ void exec_cmd(vector<int> params) {
         new_params = params;
 
         //mouse_mode_exec(params);
-        kb_mode_exec(params);
+        if (gesture_mode) {
+            kb_gesture(params);
+        }
+        else {
+            if (!mouse_mode)
+                kb_mode_exec(params);
+            else
+                mouse_mode_exec(params);
+        }
     }
 }
 
