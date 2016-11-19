@@ -262,10 +262,10 @@ int key_code_from_str(string c) {
     //if (c == "F2") { return 120; }
     //if (c == "PGDN") { return 121; }
     //if (c == "F1") { return 122; }
-    //if (c == "LEFT") { return 123; }
-    //if (c == "RIGHT") { return 124; }
-    //if (c == "DOWN") { return 125; }
-    //if (c == "UP") { return 126; }
+    if (c == "LEFT") { return 123; }
+    if (c == "RIGHT") { return 124; }
+    if (c == "DOWN") { return 125; }
+    if (c == "UP") { return 126; }
 
     return 0;
 }
@@ -276,6 +276,17 @@ void press_key(string s) {
     bool shift_key = (s == "!" || s == "@" || s == "#" || s == "$" || s == "%"
             || s == "^" || s == "&" || s == "*" || s == "(" || s == ")");
 
+
+    if (shift_level == 2) {
+        if (s == "u")
+            s = "UP";
+        else if (s == "d")
+            s = "DOWN";
+        else if (s == "r")
+            s = "RIGHT";
+        else if (s == "l")
+            s = "LEFT";
+    }
 
     CGEventRef press = CGEventCreateKeyboardEvent( NULL, (CGKeyCode)key_code_from_str(s),
             true);
