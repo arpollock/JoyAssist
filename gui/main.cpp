@@ -44,6 +44,8 @@ void init_serial(sp_event_set *ev){
     CGDirectDisplayID d_id = CGMainDisplayID();
     D_WIDTH = CGDisplayPixelsWide(d_id);
     D_HEIGHT = CGDisplayPixelsHigh(d_id);
+    MPOS_X = D_WIDTH/2;
+    MPOS_Y = D_HEIGHT/2;
 
     sp_get_port_by_name("/dev/cu.usbserial-DA01R1FM", &port_ptr);
     sp_set_baudrate(port_ptr, 9600);
