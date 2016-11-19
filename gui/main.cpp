@@ -134,25 +134,24 @@ int first_active = -1;
 void kb_mode_exec(vector<int> params) {
     clear_display();
 
-    string row1 = "XYZABCDE";
+    string row1 = "EDCBAZYX";
     string col1 = "JIHGF";
     string col2 = "STUVW";
-    string row2 = "RQPONMLK";
+    string row2 = "KLMNOPQR";
 
-    //double x = ((double)params.at(0)) / 1023.0;
-    //double y = ((double)params.at(1)) / 1023.0;
-    double x = ((double)params.at(0) - X_REST) / 1023.0;
-    double y = ((double)params.at(1) - Y_REST) / 1023.0;
+    double x = ((double)params.at(0)) / 1023.0;
+    double y = ((double)params.at(1)) / 1023.0;
+
     x = round(x * 10.0 ) / 10.0;
     y = round(y * 10.0 ) / 10.0;
 
-    if (x != 0 && y == 0) {
+    if (x != 0.5 && y == 0.5) {
         first_active = 0;
     }
-    else if (x == 0 && y != 0) {
+    else if (x == 0.5 && y != 0.5) {
         first_active = 1;
     }
-    else if (x == 0 && y == 0) {
+    else if (x == 0.5 && y == 0.5) {
         first_active = -1;
     }
 
@@ -162,9 +161,9 @@ void kb_mode_exec(vector<int> params) {
 
     // use columns, x was moved first
     if (first_active == 0) {
-        if (x > 0.2)
+        if (x > 0.5)
             use_me = col2;
-        else if (x < -0.2)
+        else if (x < 0.5)
             use_me = col1;
 
         use_axis = y;
@@ -172,9 +171,9 @@ void kb_mode_exec(vector<int> params) {
     }
 
     if (first_active == 1) {
-        if (y > 0.2)
+        if (y > 0.5)
             use_me = row1;
-        else if (y < -0.2)
+        else if (y < 0.5)
             use_me = row2;
 
         use_axis = x;
@@ -182,7 +181,7 @@ void kb_mode_exec(vector<int> params) {
     }
 
     if (first_active != -1) {
-        selection = use_me[use_me.length() * use_axis];
+        selection = use_me[(use_me.length()-1) * use_axis];
     }
     select_letter(selection);
     cout << x << "," << y << endl;
