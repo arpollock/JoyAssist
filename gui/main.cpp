@@ -128,9 +128,121 @@ void clear_display() {
     cout << "\033[2J";
 }
 
+int key_code_from_str(string c) {
+    if (c == "a") { return 0; }
+    if (c == "s") { return 1; }
+    if (c == "d") { return 2; }
+    if (c == "f") { return 3; }
+    if (c == "h") { return 4; }
+    if (c == "g") { return 5; }
+    if (c == "z") { return 6; }
+    if (c == "x") { return 7; }
+    if (c == "c") { return 8; }
+    if (c == "v") { return 9; }
+    // what is 10?
+    if (c == "b") { return 11; }
+    if (c == "q") { return 12; }
+    if (c == "w") { return 13; }
+    if (c == "e") { return 14; }
+    if (c == "r") { return 15; }
+    if (c == "y") { return 16; }
+    if (c == "t") { return 17; }
+    if (c == "1") { return 18; }
+    if (c == "2") { return 19; }
+    if (c == "3") { return 20; }
+    if (c == "4") { return 21; }
+    if (c == "6") { return 22; }
+    if (c == "5") { return 23; }
+    if (c == "=") { return 24; }
+    if (c == "9") { return 25; }
+    if (c == "7") { return 26; }
+    if (c == "-") { return 27; }
+    if (c == "8") { return 28; }
+    if (c == "0") { return 29; }
+    if (c == "") { return 30; }
+    if (c == "o") { return 31; }
+    if (c == "u") { return 32; }
+    if (c == "[") { return 33; }
+    if (c == "i") { return 34; }
+    if (c == "p") { return 35; }
+    if (c == "RETURN") { return 36; }
+    if (c == "l") { return 37; }
+    if (c == "j") { return 38; }
+    if (c == "'") { return 39; }
+    if (c == "k") { return 40; }
+    if (c == ";") { return 41; }
+    if (c == "\\") { return 42; }
+    if (c == ",") { return 43; }
+    if (c == "/") { return 44; }
+    if (c == "n") { return 45; }
+    if (c == "m") { return 46; }
+    if (c == ".") { return 47; }
+    if (c == "TAB") { return 48; }
+    if (c == "SPACE") { return 49; }
+    if (c == "`") { return 50; }
+    if (c == "DELETE") { return 51; }
+    if (c == "ENTER") { return 52; }
+    //if (c == "ESCAPE") { return 53; }
+
+    // some more missing codes abound, reserved I presume, but it would
+    // have been helpful for Apple to have a document with them all listed
+
+    //if (c == ".") { return 65; }
+    //if (c == "*") { return 67; }
+    //if (c == "+") { return 69; }
+    //if (c == "CLEAR") { return 71; }
+    //if (c == "/") { return 75; }
+    //if (c == "ENTER") { return 76;  // numberpad on full kbd }
+    //if (c == "=") { return 78; }
+    //if (c == "=") { return 81; }
+    //if (c == "0") { return 82; }
+    //if (c == "1") { return 83; }
+    //if (c == "2") { return 84; }
+    //if (c == "3") { return 85; }
+    //if (c == "4") { return 86; }
+    //if (c == "5") { return 87; }
+    //if (c == "6") { return 88; }
+    //if (c == "7") { return 89; }
+    //if (c == "8") { return 91; }
+    //if (c == "9") { return 92; }
+    //if (c == "F5") { return 96; }
+    //if (c == "F6") { return 97; }
+    //if (c == "F7") { return 98; }
+    //if (c == "F3") { return 99; }
+    //if (c == "F8") { return 100; }
+    //if (c == "F9") { return 101; }
+    //if (c == "F11") { return 103; }
+    //if (c == "F13") { return 105; }
+    //if (c == "F14") { return 107; }
+    //if (c == "F10") { return 109; }
+    //if (c == "F12") { return 111; }
+    //if (c == "F15") { return 113; }
+    //if (c == "HELP") { return 114; }
+    //if (c == "HOME") { return 115; }
+    //if (c == "PGUP") { return 116; }
+    //if (c == "DELETE") { return 117; }
+    //if (c == "F4") { return 118; }
+    //if (c == "END") { return 119; }
+    //if (c == "F2") { return 120; }
+    //if (c == "PGDN") { return 121; }
+    //if (c == "F1") { return 122; }
+    //if (c == "LEFT") { return 123; }
+    //if (c == "RIGHT") { return 124; }
+    //if (c == "DOWN") { return 125; }
+    //if (c == "UP") { return 126; }
+
+    return 0;
+}
+
 int first_active = -1;
+char last_letter = ' ';
+
+bool depressed = false;
+
 void kb_mode_exec(vector<int> params) {
     clear_display();
+
+    bool clicked = (params.at(2) == 0);
 
     string row1 = "EDCBAZYX";
     string col1 = "JIHGF";
@@ -165,7 +277,7 @@ void kb_mode_exec(vector<int> params) {
             use_me = col1;
 
         use_axis = y;
-        cout << "Using Cols" << endl;
+        //cout << "Using Cols" << endl;
     }
 
     if (first_active == 1) {
@@ -175,14 +287,35 @@ void kb_mode_exec(vector<int> params) {
             use_me = row2;
 
         use_axis = x;
-        cout << "Using Rows" << endl;
+        //cout << "Using Rows" << endl;
     }
 
     if (first_active != -1) {
-        selection = use_me[(use_me.length()-1) * use_axis];
+        selection = use_me[round((use_me.length()-1) * use_axis)];
     }
     select_letter(selection);
-    //cout << x << "," << y << endl;
+
+    if (selection != ' ')
+        last_letter = selection;
+
+    string s(1, tolower(last_letter));
+    cout << s << endl;
+    if (clicked && !depressed) {
+
+        CGEventRef press = CGEventCreateKeyboardEvent( NULL, (CGKeyCode)key_code_from_str(s),
+                true);
+        CGEventPost(kCGHIDEventTap, press);
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        CGEventRef depress = CGEventCreateKeyboardEvent( NULL, (CGKeyCode)key_code_from_str(s),
+                false);
+        CGEventPost(kCGHIDEventTap, depress);
+
+        CFRelease(press);
+        CFRelease(depress);
+    }
+
+    depressed = clicked;
 }
 
 void exec_cmd(vector<int> params) {
