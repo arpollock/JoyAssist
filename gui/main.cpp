@@ -21,6 +21,8 @@ const int Y_REST = 515;
 int MPOS_X = 0;
 int MPOS_Y = 0;
 
+vector<int> new_params;
+
 void MoveMouse(int x, int y) {
     int newX = MPOS_X - x;
     int newY = MPOS_Y - y;
@@ -63,7 +65,7 @@ vector<int> parse_cmd(string cmd) {
 
             if (c == '\n') {
                 if (params.size() != 3) {
-                    //cout << cmd << endl;
+                    params.clear();
                 }
                 return params;
             }
@@ -74,6 +76,10 @@ vector<int> parse_cmd(string cmd) {
     return params;
 }
 
+vector<int> get_params() {
+    return new_params;
+}
+
 void exec_cmd(vector<int> params) {
     if (params.size() == 3) {
 
@@ -82,7 +88,9 @@ void exec_cmd(vector<int> params) {
         if (p0 == 0 || p0 == 6 || p0 == 96)
             return;
 
-        int SCALE = 8;
+        new_params = params;
+
+        int SCALE = 7;
 
         int x =  (((double)params.at(0) - X_REST) / 1023.0) * SCALE;
         int y =  (((double)params.at(1) - Y_REST) / 1023.0) * SCALE;
@@ -97,8 +105,6 @@ void exec_cmd(vector<int> params) {
                 kCGMouseButtonLeft // ignored
                 );
         CGEventPost(kCGHIDEventTap, move);
-        //cout << "(" << x << ", " << y << ")" << endl;
-        CFRelease(move);
 
         if (clicked) {
             // press left mouse button
@@ -121,6 +127,8 @@ void exec_cmd(vector<int> params) {
             CGEventPost(kCGHIDEventTap, click_up);
             CFRelease(click_up);
         }
+
+        CFRelease(move);
     }
 }
 
@@ -134,14 +142,13 @@ int main() {
         int res = sp_blocking_read_next(port_ptr, buf, sizeof(buf), 50);
 
         if (res > 0) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
-
+            //std::this_thread::sleep_for(std::chrono::milliseconds(20));
             string cmd = string(buf);
             vector<int> params = parse_cmd(cmd);
             exec_cmd(params);
         }
         else {
-            cout << "ERROR, NUGGET: " << res << endl;
+            //cout << "ERROR, NUGGET: " << res << endl;
         }
     }
 
