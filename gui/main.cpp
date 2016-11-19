@@ -224,7 +224,6 @@ int key_code_from_str(string c) {
     // some more missing codes abound, reserved I presume, but it would
     // have been helpful for Apple to have a document with them all listed
 
-    //if (c == ".") { return 65; }
     if (c == "*") { return 67; }
     if (c == "+") { return 69; }
     if (c == "CLEAR") { return 71; }
@@ -316,10 +315,18 @@ void press_key(string s) {
 
 
 int first_active = -1;
-char last_letter = ' ';
+char last_letter = '\0';
 
 bool depressed = false;
 bool gesture_mode = false;
+
+void insert_space_period() {
+    press_key("DELETE");
+    //press_key("DELETE");
+    press_key(".");
+    press_key("SPACE");
+    last_letter = '.';
+}
 
 void kb_mode_exec(vector<int> params) {
     clear_display();
@@ -358,7 +365,7 @@ void kb_mode_exec(vector<int> params) {
         }
     }
 
-    char selection = ' ';
+    char selection = '\0';
     string use_me = "";
     double use_axis = 0;
 
@@ -386,13 +393,14 @@ void kb_mode_exec(vector<int> params) {
     }
     select_ascii(selection, shift_level);
 
-    if (selection != ' ')
-        last_letter = selection;
 
-    string s(1, tolower(last_letter));
-    //cout << s << endl;
-    cout << "SHIFT " << ((shift_level > 0) ? "ON" : "OFF") << endl;
+    string s(1, tolower(selection));
+
+    cout << "SHIFT " << ((shift_level == 1) ? "ON" : "OFF") << endl;
     if (clicked && !depressed) {
+        if (selection != '\0')
+            last_letter = selection;
+
         press_key(s);
     }
 
@@ -410,7 +418,15 @@ void kb_gesture(vector<int> params) {
         return;
 
     if (x < 0.5) {
-        press_key("SPACE");
+        if (last_letter != ' ') {
+            press_key("SPACE");
+            last_letter = ' ';
+        }
+        else {
+            insert_space_period();
+            //std::this_thread::sleep_for(std::chrono::milliseconds(80));
+        }
+
         gesture_mode = false;
         depressed = true;
         click_count = 0;
@@ -450,7 +466,6 @@ void kb_gesture(vector<int> params) {
 
 void exec_cmd(vector<int> params) {
     if (params.size() == 3) {
-
         int p0 = params.at(0);
 
         if (p0 == 0 || p0 == 6 || p0 == 96)
@@ -458,7 +473,6 @@ void exec_cmd(vector<int> params) {
 
         new_params = params;
 
-        //mouse_mode_exec(params);
         if (!mouse_mode) {
             if (gesture_mode)
                 kb_gesture(params);
