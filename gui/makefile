@@ -4,7 +4,7 @@ CXXFLAGS += -I/usr/local/include/
 LDFLAGS = -L/usr/local/lib/
 LDFLAGS += -lserialport
 LDFLAGS += -framework ApplicationServices
-LDFLAGS += -lsfml-graphics -lsfml-window -lsfml-system
+#LDFLAGS += -lsfml-graphics -lsfml-window -lsfml-system
 
 TARGET = thumby
 SRCDIR = ./

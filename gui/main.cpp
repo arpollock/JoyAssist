@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <chrono>
 #include <thread>
+#include "graphics.h"
 
 using namespace std;
 
@@ -80,6 +81,90 @@ vector<int> get_params() {
     return new_params;
 }
 
+bool last_clicked = false;
+
+void mouse_mode_exec(vector<int> params) {
+    int SCALE = 7;
+
+    int x =  (((double)params.at(0) - X_REST) / 1023.0) * SCALE;
+    int y =  (((double)params.at(1) - Y_REST) / 1023.0) * SCALE;
+
+    MoveMouse(x*SCALE, y*SCALE);
+
+    bool clicked = (params.at(2) == 0) && last_clicked;
+
+    CGEventRef move = CGEventCreateMouseEvent(
+            NULL, kCGEventMouseMoved,
+            CGPointMake(MPOS_X, MPOS_Y),
+            kCGMouseButtonLeft // ignored
+            );
+    CGEventPost(kCGHIDEventTap, move);
+
+    if (clicked) {
+        // press left mouse button
+        CGEventRef click_down = CGEventCreateMouseEvent(
+                NULL, kCGEventLeftMouseDown,
+                CGPointMake(MPOS_X, MPOS_Y),
+                kCGMouseButtonLeft
+                );
+
+        CGEventPost(kCGHIDEventTap, click_down);
+        CFRelease(click_down);
+    } else if (last_clicked) {
+        // release left mouse button
+        CGEventRef click_up = CGEventCreateMouseEvent(
+                NULL, kCGEventLeftMouseUp,
+                CGPointMake(MPOS_X, MPOS_Y),
+                kCGMouseButtonLeft
+                );
+
+        CGEventPost(kCGHIDEventTap, click_up);
+        CFRelease(click_up);
+    }
+
+    last_clicked = (params.at(2) == 0);
+
+    CFRelease(move);
+}
+
+void clear_display() {
+    for (int i=0; i < 100; i++) {
+        cout << endl;
+    }
+}
+
+void kb_mode_exec(vector<int> params) {
+    clear_display();
+
+    string row1 = "XYZABCDE";
+    string col1 = "JIHGF";
+    string col2 = "STUVW";
+    string row2 = "RQPONMLK";
+
+    double x = ((double)params.at(0)) / 1023.0;
+    double y = ((double)params.at(1)) / 1023.0;
+    //double x = ((double)params.at(0) - X_REST) / 1023.0;
+    //double y = ((double)params.at(1) - Y_REST) / 1023.0;
+
+    char selection = ' ';
+
+    if (params.at(0) > 900) {
+        selection = col2[col2.length() * y];
+    }
+    else if (params.at(0) < 100) {
+        selection = col1[col1.length() * y];
+    }
+    else if (params.at(1) > 900) {
+        selection = row1[row1.length() * x];
+    }
+    else if (params.at(1) < 100) {
+        selection = row2[row2.length() * x];
+    }
+
+    cout << x << "," << y << endl;
+    select_letter(selection);
+}
+
 void exec_cmd(vector<int> params) {
     if (params.size() == 3) {
 
@@ -90,45 +175,8 @@ void exec_cmd(vector<int> params) {
 
         new_params = params;
 
-        int SCALE = 7;
-
-        int x =  (((double)params.at(0) - X_REST) / 1023.0) * SCALE;
-        int y =  (((double)params.at(1) - Y_REST) / 1023.0) * SCALE;
-
-        MoveMouse(x*SCALE, y*SCALE);
-
-        bool clicked = (params.at(2) == 0);
-
-        CGEventRef move = CGEventCreateMouseEvent(
-                NULL, kCGEventMouseMoved,
-                CGPointMake(MPOS_X, MPOS_Y),
-                kCGMouseButtonLeft // ignored
-                );
-        CGEventPost(kCGHIDEventTap, move);
-
-        if (clicked) {
-            // press left mouse button
-            CGEventRef click_down = CGEventCreateMouseEvent(
-                    NULL, kCGEventLeftMouseDown,
-                    CGPointMake(MPOS_X, MPOS_Y),
-                    kCGMouseButtonLeft
-                    );
-
-            CGEventPost(kCGHIDEventTap, click_down);
-            CFRelease(click_down);
-        } else {
-            // release left mouse button
-            CGEventRef click_up = CGEventCreateMouseEvent(
-                    NULL, kCGEventLeftMouseUp,
-                    CGPointMake(MPOS_X, MPOS_Y),
-                    kCGMouseButtonLeft
-                    );
-
-            CGEventPost(kCGHIDEventTap, click_up);
-            CFRelease(click_up);
-        }
-
-        CFRelease(move);
+        //mouse_mode_exec(params);
+        kb_mode_exec(params);
     }
 }
 
