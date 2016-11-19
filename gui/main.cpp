@@ -125,9 +125,7 @@ void mouse_mode_exec(vector<int> params) {
 }
 
 void clear_display() {
-    for (int i=0; i < 100; i++) {
-        cout << endl;
-    }
+    cout << "\033[2J";
 }
 
 int first_active = -1;
@@ -184,7 +182,7 @@ void kb_mode_exec(vector<int> params) {
         selection = use_me[(use_me.length()-1) * use_axis];
     }
     select_letter(selection);
-    cout << x << "," << y << endl;
+    //cout << x << "," << y << endl;
 }
 
 void exec_cmd(vector<int> params) {
