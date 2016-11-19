@@ -28,7 +28,7 @@ string loadSeed(string infile)
 	}
 	string _text_file = infile;
 
-	// get all strings; extra whitespace will be ignored 
+	// get all strings; extra whitespace will be ignored
 	ostringstream text;
 	while (!fin.eof()) {
 		string s;
