@@ -26,27 +26,30 @@ T                                      I
 
 
 S                                      J
+
   R    Q    P    O    N    M    L    K
 )";
 
 string circle_symbols = R"(
-  1  2  3  4  5    U    6  7  8  9  0aa
-'                                     .
+ #   1  2  3  4  5  6  7  8  9   0   $
+
+'                                     %
 
 
-"            aaaaaaaaa                         ,
+"                                     *
 
 
-L                                     R
-a	aaaaa
+@                                     ,
 
-=                                     ?
+
++                                     ?
 
 
 -                                     !
 
-+                                     )
-   #    /    &    D    $    @    (
+
+=                                     /
+  <    >     &    .    ;     :  (   )
 )";
 
 string circle_3 = R"(
@@ -54,7 +57,7 @@ string circle_3 = R"(
 
 
 
-PREV                                NEXT
+B-                                    B+
 
 
 

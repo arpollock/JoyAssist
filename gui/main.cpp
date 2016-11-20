@@ -209,12 +209,16 @@ int key_code_from_str(string c) {
     if (c == "'") { return 39; }
     if (c == "k") { return 40; }
     if (c == ";") { return 41; }
+    if (c == ":") { return 41; }
     if (c == "\\") { return 42; }
     if (c == ",") { return 43; }
+    if (c == "<") { return 43; }
     if (c == "/") { return 44; }
+    if (c == "?") { return 44; }
     if (c == "n") { return 45; }
     if (c == "m") { return 46; }
     if (c == ".") { return 47; }
+    if (c == ">") { return 47; }
     if (c == "TAB") { return 48; }
     if (c == "tab") { return 48; }
     if (c == "SPACE") { return 49; }
@@ -242,25 +246,25 @@ int key_code_from_str(string c) {
     if (c == "7") { return 89; }
     if (c == "8") { return 91; }
     if (c == "9") { return 92; }
-    //if (c == "F5") { return 96; }
-    //if (c == "F6") { return 97; }
-    //if (c == "F7") { return 98; }
-    //if (c == "F3") { return 99; }
-    //if (c == "F8") { return 100; }
-    //if (c == "F9") { return 101; }
-    //if (c == "F11") { return 103; }
-    //if (c == "F13") { return 105; }
-    //if (c == "F14") { return 107; }
-    //if (c == "F10") { return 109; }
-    //if (c == "F12") { return 111; }
-    //if (c == "F15") { return 113; }
+    if (c == "F5") { return 96; }
+    if (c == "F6") { return 97; }
+    if (c == "F7") { return 98; }
+    if (c == "F3") { return 99; }
+    if (c == "F8") { return 100; }
+    if (c == "F9") { return 101; }
+    if (c == "F11") { return 103; }
+    if (c == "F13") { return 105; }
+    if (c == "F14") { return 107; }
+    if (c == "F10") { return 109; }
+    if (c == "F12") { return 111; }
+    if (c == "F15") { return 113; }
     //if (c == "HELP") { return 114; }
     //if (c == "HOME") { return 115; }
     //if (c == "PGUP") { return 116; }
     //if (c == "DELETE") { return 117; }
     //if (c == "F4") { return 118; }
     //if (c == "END") { return 119; }
-    //if (c == "F2") { return 120; }
+    if (c == "F2") { return 120; }
     //if (c == "PGDN") { return 121; }
     //if (c == "F1") { return 122; }
     if (c == "LEFT") { return 123; }
@@ -274,9 +278,10 @@ int key_code_from_str(string c) {
 int shift_level = 0;
 
 void press_key(string s) {
-    bool shift_key = (s == "!" || s == "@" || s == "#" || s == "$" || s == "%"
-            || s == "^" || s == "&" || s == "*" || s == "(" || s == ")");
-
+    bool shift_key = (s == "!" || s == "@" || s == "#" || s ==
+            "$" || s == "%" || s == "^" || s == "&" || s == "*"
+            || s == "(" || s == ")" || s == "<" || s == ">" ||
+            s == "?" || s == "+" || s == ":" || s == "\"");
 
     if (shift_level > 1) {
         if (s == "U")
@@ -318,12 +323,12 @@ void press_key(string s) {
 void press_compound(string compound) {
     compound = to_upper(compound);
     vector<pair<string, string>> commands = { {"CUT", "X"}, {"COPY", "C"} , {"U", "U"}, {"PASTE",
-        "V"}, {"TAB", "TAB"}, {"PREV", "TAB"}, {"NEXT", "TAB"}, {"L", "L"},
+        "V"}, {"TAB", "TAB"}, {"L", "L"}, {"B-", "F13"}, {"B+", "F14"},
            {"R", "R"}, {"CMD-A", "A"}, {"FIND", "F"}, {"Z-IN", "+"}, {"Z-OUT", "-"},
            {"D", "D"}, {"RESET-ZOOM", "0"}, {"ENTER", "ENTER"} };
 
     vector<string> cmd_needed = { "PASTE", "COPY", "CUT", "FIND",
-        "NEXT", "CMD-A", "PREV", "RESET-ZOOM", "Z-OUT", "Z-IN" };
+        "CMD-A", "RESET-ZOOM", "Z-OUT", "Z-IN" };
 
     bool use_command = false;
 
@@ -333,10 +338,17 @@ void press_compound(string compound) {
     }
 
     if (!use_command) {
-        press_key(to_upper(compound));
+        string use_cmd = "";
+        for (pair<string,string> cmd : commands) {
+            if (compound == cmd.first) {
+                use_cmd = cmd.second;
+                break;
+            }
+        }
+
+        press_key(to_upper(use_cmd));
     }
     else {
-		bool modSHIFT = (compound == "PREV");
 		string modkey = "";
 
         for (pair<string,string> cmd : commands) {
@@ -348,8 +360,6 @@ void press_compound(string compound) {
         if (modkey == "")
             return;
 
-		if (modSHIFT == 1) CGPostKeyboardEvent((CGCharCode)0, (CGKeyCode)56, true);
-
 		CGPostKeyboardEvent((CGCharCode)0, (CGKeyCode)55, true);
 
 		// post the keyboard event for the keystroke
@@ -357,7 +367,6 @@ void press_compound(string compound) {
 		CGPostKeyboardEvent((CGCharCode)0, (CGKeyCode)key_code_from_str(to_lower(modkey)), false);
 
 		// unset any modifiers
-		if (modSHIFT == 1) CGPostKeyboardEvent((CGCharCode)0, (CGKeyCode)56, false);
 		CGPostKeyboardEvent((CGCharCode)0, (CGKeyCode)55, false);
     }
 
@@ -389,15 +398,15 @@ void kb_mode_exec(vector<int> params) {
     vector<string> row2 = { "K", "L", "M", "N", "O", "P", "Q", "R" };
 
     if (shift_level == 2) {
-        row1 = { "0", "9", "8", "7", "6", "U", "5", "4", "3", "2", "1" };
-        col1 = { ")", "!", "?", "R", ",", "." };
-        col2 = { "+", "-", "=", "L", "\\", "\"", "'" };
-        row2 = { "(", "@", "$", "D", "&", "/", "#" };
+        row1 = { "$", "0", "9", "8", "7", "6", "5", "4", "3", "2", "1", "#" };
+        col1 = { "/", "!", "?", ",", "*", "%" };
+        col2 = { "=", "-", "+", "@", "\"", "'" };
+        row2 = { ")", "(", ":", ";", ".", "&", ">", "<" };
     }
     else if (shift_level == 3) {
         row1 = { "TAB", "PASTE", "U", "COPY", "CUT" };
-        col1 = { "FIND", "R", "NEXT" };
-        col2 = { "CMD-A", "L", "PREV" };
+        col1 = { "FIND", "R", "B+" };
+        col2 = { "CMD-A", "L", "B-" };
         row2 = { "ENTER", "RESET-ZOOM", "Z-OUT", "Z-IN" };
     }
 
