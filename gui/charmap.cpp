@@ -49,12 +49,10 @@ void gen_char_occ(string infile)
 				//if the key doesn't exist
 				if (!next_count.count(_text[i + 1]))
 				{
-					//cout << "added " << _text[i + 1] << endl;
 					next_count.insert(pair<char, int>(_text[i + 1], 1));
 				}
 				else //if the key does exist
 				{
-					//cout << "incremented " << _text[i + 1] << endl;
 					next_count[_text[i + 1]]++;
 				}
 			}
@@ -86,7 +84,6 @@ map<char,char> load_char_occ()
 	ifstream fin(infile);
 	if (!fin) {
 		cerr << "Error opening input file \"" << endl;
-		//return false;
 	}
 
 	map<char, char> char_map;
@@ -96,7 +93,6 @@ map<char,char> load_char_occ()
 		char t;
 		fin >> s >> t;
 		char_map.insert(pair<char, char>(s, t));
-		//cout << s << "   " << t << endl;
 	}
 
 	fin.close();

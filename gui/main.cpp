@@ -116,10 +116,8 @@ void mouse_mode_exec(vector<int> params) {
 
     if (params.at(2) == 0 && !dragging) {
         // dragging
-        //cout << x << " " << y << endl;
         if (abs(x) >= 0.1 || abs(y) >= 0.1) {
             dragging = true;
-            //cout << "Dragging" << MPOS_X << endl;
             CGEventRef left_click_down = CGEventCreateMouseEvent(
                     NULL, kCGEventLeftMouseDown,
                     CGPointMake(MPOS_X, MPOS_Y),
@@ -128,8 +126,6 @@ void mouse_mode_exec(vector<int> params) {
 
             CGEventPost(kCGHIDEventTap, left_click_down);
             CFRelease(left_click_down);
-
-            //cout << "Put Down  " << 0 << endl;
         }
     }
 
@@ -150,7 +146,6 @@ void mouse_mode_exec(vector<int> params) {
 
     // depressed
     if (last_clicked && params.at(2) != 0) {
-        //cout << "Depressed" << endl;
         auto elapsed = std::chrono::duration_cast< std::chrono::milliseconds
             >(std::chrono::system_clock::now().time_since_epoch()) - click_started;
 
@@ -159,7 +154,6 @@ void mouse_mode_exec(vector<int> params) {
         CGMouseButton m_button  = kCGMouseButtonLeft;
         bool right_click = false;
 
-        //cout << elapsed.count() << endl;
         if (elapsed.count() > 320) {
             if (!dragging) {
                 right_click = true;
@@ -180,7 +174,6 @@ void mouse_mode_exec(vector<int> params) {
             CGEventPost(kCGHIDEventTap, left_click_up);
             CFRelease(left_click_up);
             std::this_thread::sleep_for(std::chrono::milliseconds(20));
-            //cout << "Let Up  " << 0 << endl;
         }
 
         // press mouse button
@@ -193,8 +186,6 @@ void mouse_mode_exec(vector<int> params) {
         CGEventPost(kCGHIDEventTap, click_down);
         CFRelease(click_down);
 
-        //cout << "Put Down  " << right_click << endl;
-
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         // release mouse button
         CGEventRef click_up = CGEventCreateMouseEvent(
@@ -205,7 +196,6 @@ void mouse_mode_exec(vector<int> params) {
 
         CGEventPost(kCGHIDEventTap, click_up);
         CFRelease(click_up);
-        //cout << "Let Up  " << right_click << endl;
 
         last_x = MPOS_X;
         last_y = MPOS_Y;
@@ -438,7 +428,6 @@ void press_compound(string compound) {
 		CGPostKeyboardEvent((CGCharCode)0, (CGKeyCode)55, false);
     }
 
-    //CGEventRef shift_lift = CGEventCreateKeyboardEvent(NULL, (CGKeyCode)56, false);
 }
 
 int first_active = -1;
@@ -449,7 +438,6 @@ bool gesture_mode = false;
 
 void insert_space_period() {
     press_key("DELETE");
-    //press_key("DELETE");
     press_key(".");
     press_key("SPACE");
     last_letter = '.';
@@ -665,7 +653,6 @@ int main() {
     struct sp_event_set *ev = nullptr;
     init_serial(ev);
 
-    //int used = 0;
     string cmd = "";
 
     for (;;) {
@@ -673,20 +660,17 @@ int main() {
         sp_wait(ev, 0);
         int res = sp_blocking_read_next(port_ptr, buf, 1, 50);
 
-        //used += res;
         if (res > 0) {
             cmd += (char)buf[0];
         }
 
         if (buf[0] == '\r') {
-            //std::this_thread::sleep_for(std::chrono::milliseconds(20));
             vector<int> params = parse_cmd(cmd);
             exec_cmd(params);
-            //cout << cmd;
             cmd = "";
         }
         else {
-            //cout << "ERROR, NUGGET: " << res << endl;
+            continue;
         }
     }
 
