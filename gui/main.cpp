@@ -323,7 +323,7 @@ void press_key(string s) {
 void press_compound(string compound) {
     compound = to_upper(compound);
     vector<pair<string, string>> commands = { {"CUT", "X"}, {"COPY", "C"} , {"U", "U"}, {"PASTE",
-        "V"}, {"TAB", "TAB"}, {"L", "L"}, {"B-", "F13"}, {"B+", "F14"},
+        "V"}, {"TAB", "TAB"}, {"L", "L"}, {"B-", "F14"}, {"B+", "F15"},
            {"R", "R"}, {"CMD-A", "A"}, {"FIND", "F"}, {"Z-IN", "+"}, {"Z-OUT", "-"},
            {"D", "D"}, {"RESET-ZOOM", "0"}, {"ENTER", "ENTER"} };
 
