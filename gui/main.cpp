@@ -8,7 +8,9 @@
 #include <chrono>
 #include <thread>
 #include <math.h>
+#include <map>
 #include "graphics.h"
+#include "charmap.h"
 
 using namespace std;
 
@@ -24,6 +26,7 @@ int MPOS_X = 0;
 int MPOS_Y = 0;
 
 vector<int> new_params;
+map<char, char> occurence_map;
 
 void MoveMouse(int x, int y) {
     int newX = MPOS_X - x;
@@ -521,12 +524,13 @@ void kb_mode_exec(vector<int> params) {
     if (first_active != -1) {
         selection = use_me[round((use_me.size()-1) * use_axis)];
     }
-    select_ascii(selection, shift_level);
 
+    select_ascii(selection, shift_level, occurence_map, last_letter);
 
     string s = to_lower(selection);
 
     cout << "SHIFT " << ((shift_level == 1) ? "ON" : "OFF") << endl;
+
     if (clicked && !depressed) {
         if (selection != "")
             last_letter = selection[0];
@@ -602,13 +606,26 @@ void kb_gesture(vector<int> params) {
     auto elapsed = std::chrono::duration_cast< std::chrono::milliseconds
         >(std::chrono::system_clock::now().time_since_epoch()) - click_started;
 
-    if (elapsed.count() > 500 && wait_on_click) {
-        // use next letter
-        cout << "recommend" << endl;
-        gesture_mode = false;
-        return;
+    if (elapsed.count() > 400 && wait_on_click) {
+        if (!last_clicked) {
+            // use next letter
+            char ll = tolower(last_letter);
+            char recommended_char = ' ';
+            if (ll >= 'a' && ll <= 'z')
+                recommended_char = occurence_map.at(ll);
+
+            string s(1, recommended_char);
+            press_key(s);
+            last_letter = recommended_char;
+            last_clicked = (params.at(2) == 0);
+
+            wait_on_click = false;
+            gesture_mode = false;
+            click_count = 0;
+            return;
+        }
     }
-    else if (elapsed.count() < 500) {
+    else if (elapsed.count() < 400) {
         if (!last_clicked && params.at(2) == 0) {
             click_count++;
         }
@@ -643,6 +660,8 @@ void exec_cmd(vector<int> params) {
 }
 
 int main() {
+    occurence_map = load_char_occ();
+
     struct sp_event_set *ev = nullptr;
     init_serial(ev);
 

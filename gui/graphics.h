@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <map>
 
 using namespace std;
 
@@ -82,7 +83,7 @@ const char* GREEN = "\033[32m";
 const char* BLUE = "\033[34m";
 const char* YELLOW = "\033[33m";
 
-char last_letter_visual = ' ';
+char recommended_char = ' ';
 
 string to_upper(string str) {
     string new_str = "";
@@ -100,8 +101,9 @@ string to_lower(string str) {
     return new_str;
 }
 
-void select_ascii(string select_str, int shift_level) {
+void select_ascii(string select_str, int shift_level, map<char, char> occurence_map, char last_letter) {
     string orig_circle = circle;
+    char lll = last_letter;
 
     if (shift_level == 2) {
         orig_circle = circle_symbols;
@@ -114,6 +116,13 @@ void select_ascii(string select_str, int shift_level) {
     string find_str = "";
 
     for (char find : orig_circle) {
+
+        last_letter = tolower(last_letter);
+        if (last_letter >= 'a' && last_letter <= 'z')
+            recommended_char = occurence_map.at(last_letter);
+        else
+            recommended_char = ' ';
+
         find_str += find;
 
         if (find_str == select_str) {
@@ -127,7 +136,7 @@ void select_ascii(string select_str, int shift_level) {
             }
             new_circle += RESET;
             find_str = "";
-            //last_letter_visual = find;
+
         }
         else if (find == ' ' || find == '\n') {
             if (shift_level == 0)
@@ -137,17 +146,15 @@ void select_ascii(string select_str, int shift_level) {
 
             find_str = "";
         }
-        else if (find == '_') {
-            if (select_str == "")
-                new_circle += last_letter_visual;
-            //else
-                //new_circle += toupper(c);
 
+        if (find == '_') {
+            new_circle += recommended_char;
             find_str = "";
         }
     }
 
     cout << new_circle << endl;
+    cout << lll << endl;
 }
 
 #endif
