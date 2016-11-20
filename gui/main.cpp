@@ -93,9 +93,17 @@ void mouse_mode_exec(vector<int> params) {
     int x =  (((double)params.at(0) - X_REST) / 1023.0) * SCALE;
     int y =  (((double)params.at(1) - Y_REST) / 1023.0) * SCALE;
 
-    MoveMouse(x, y);
-
     bool clicked = (params.at(2) == 0) && last_clicked;
+
+    if (!last_clicked && params.at(2) == 0) {
+        if (abs(last_x - MPOS_X) < 15 || abs(last_y - MPOS_Y) < 15) {
+            click_count++;
+        } else {
+            click_count = 0;
+        }
+    }
+
+    MoveMouse(x, y);
 
     CGEventRef move = CGEventCreateMouseEvent(
             NULL, kCGEventMouseMoved,
@@ -103,13 +111,6 @@ void mouse_mode_exec(vector<int> params) {
             kCGMouseButtonLeft // ignored
             );
     CGEventPost(kCGHIDEventTap, move);
-
-    if (!last_clicked && params.at(2) == 0) {
-        if (abs(last_x - MPOS_X) < 15 || abs(last_y - MPOS_Y) < 15) {
-            click_count++;
-        }
-
-    }
 
     if (click_count == 3) {
         mouse_mode = !mouse_mode;
@@ -424,7 +425,6 @@ void kb_gesture(vector<int> params) {
         }
         else {
             insert_space_period();
-            //std::this_thread::sleep_for(std::chrono::milliseconds(80));
         }
 
         gesture_mode = false;
@@ -446,7 +446,14 @@ void kb_gesture(vector<int> params) {
             shift_level = 0;
     }
     else if (y < 0.5) {
-        press_key("ENTER");
+        if (last_letter != '\t') {
+            press_key("TAB");
+            last_letter = '\t';
+        }
+        else {
+            press_key("ENTER");
+            last_letter = '\n';
+        }
         gesture_mode = false;
         depressed = true;
         click_count = 0;
