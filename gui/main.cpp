@@ -86,6 +86,10 @@ int click_count = 0;
 int last_x = 0;
 int last_y = 0;
 bool mouse_mode = false;
+bool dragging = false;
+
+std::chrono::milliseconds click_started = std::chrono::duration_cast< std::chrono::milliseconds >(
+        std::chrono::system_clock::now().time_since_epoch());
 
 void mouse_mode_exec(vector<int> params) {
     int SCALE = 20;
@@ -96,17 +100,40 @@ void mouse_mode_exec(vector<int> params) {
     bool clicked = (params.at(2) == 0) && last_clicked;
 
     if (!last_clicked && params.at(2) == 0) {
-        if (abs(last_x - MPOS_X) < 15 || abs(last_y - MPOS_Y) < 15) {
+        click_started = std::chrono::duration_cast< std::chrono::milliseconds
+            >(std::chrono::system_clock::now().time_since_epoch());
+
+        if (abs(last_x - MPOS_X) < 20 && abs(last_y - MPOS_Y) < 20)
             click_count++;
-        } else {
+        else
             click_count = 0;
-        }
     }
 
     MoveMouse(x, y);
 
+    if (params.at(2) == 0 && !dragging) {
+        // dragging
+        cout << x << " " << y << endl;
+        if (abs(x) >= 0.1 || abs(y) >= 0.1) {
+            dragging = true;
+            cout << "Dragging" << MPOS_X << endl;
+            CGEventRef left_click_down = CGEventCreateMouseEvent(
+                    NULL, kCGEventLeftMouseDown,
+                    CGPointMake(MPOS_X, MPOS_Y),
+                    kCGMouseButtonLeft
+                    );
+
+            CGEventPost(kCGHIDEventTap, left_click_down);
+            CFRelease(left_click_down);
+
+            cout << "Put Down  " << 0 << endl;
+        }
+    }
+
+    CGEventType dragged = (dragging) ? kCGEventLeftMouseDragged : kCGEventMouseMoved;
+
     CGEventRef move = CGEventCreateMouseEvent(
-            NULL, kCGEventMouseMoved,
+            NULL, dragged,
             CGPointMake(MPOS_X, MPOS_Y),
             kCGMouseButtonLeft // ignored
             );
@@ -118,33 +145,70 @@ void mouse_mode_exec(vector<int> params) {
         return;
     }
 
-    if (clicked) {
-        // press left mouse button
+    // depressed
+    if (last_clicked && params.at(2) != 0) {
+        cout << "Depressed" << endl;
+        auto elapsed = std::chrono::duration_cast< std::chrono::milliseconds
+            >(std::chrono::system_clock::now().time_since_epoch()) - click_started;
+
+        CGEventType click_in = kCGEventLeftMouseDown;
+        CGEventType click_out = kCGEventLeftMouseUp;
+        CGMouseButton m_button  = kCGMouseButtonLeft;
+        bool right_click = false;
+
+        if (elapsed.count() > 500) {
+            if (abs(last_x - MPOS_X) < 20 && abs(last_y - MPOS_Y) < 20) {
+                right_click = true;
+                click_in = kCGEventRightMouseDown;
+                click_out = kCGEventRightMouseUp;
+                m_button  = kCGMouseButtonRight;
+            }
+        }
+
+        // release left mouse button
+        if (right_click) {
+            CGEventRef left_click_up = CGEventCreateMouseEvent(
+                    NULL, kCGEventLeftMouseUp,
+                    CGPointMake(MPOS_X, MPOS_Y),
+                    kCGMouseButtonLeft
+                    );
+
+            CGEventPost(kCGHIDEventTap, left_click_up);
+            CFRelease(left_click_up);
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            cout << "Let Up  " << 0 << endl;
+        }
+
+        // press mouse button
         CGEventRef click_down = CGEventCreateMouseEvent(
-                NULL, kCGEventLeftMouseDown,
+                NULL, click_in,
                 CGPointMake(MPOS_X, MPOS_Y),
-                kCGMouseButtonLeft
+                m_button
                 );
 
         CGEventPost(kCGHIDEventTap, click_down);
         CFRelease(click_down);
 
-    } else if (last_clicked) {
-        // release left mouse button
+        cout << "Put Down  " << right_click << endl;
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        // release mouse button
         CGEventRef click_up = CGEventCreateMouseEvent(
-                NULL, kCGEventLeftMouseUp,
+                NULL, click_out,
                 CGPointMake(MPOS_X, MPOS_Y),
-                kCGMouseButtonLeft
+                m_button
                 );
 
         CGEventPost(kCGHIDEventTap, click_up);
         CFRelease(click_up);
+        cout << "Let Up  " << right_click << endl;
+
+        last_x = MPOS_X;
+        last_y = MPOS_Y;
+        dragging = false;
     }
 
     last_clicked = (params.at(2) == 0);
-
-    last_x = MPOS_X;
-    last_y = MPOS_Y;
 
     CFRelease(move);
 }
@@ -324,8 +388,8 @@ void press_compound(string compound) {
     compound = to_upper(compound);
     vector<pair<string, string>> commands = { {"CUT", "X"}, {"COPY", "C"} , {"U", "U"}, {"PASTE",
         "V"}, {"TAB", "TAB"}, {"L", "L"}, {"B-", "F14"}, {"B+", "F15"},
-           {"R", "R"}, {"CMD-A", "A"}, {"FIND", "F"}, {"Z-IN", "+"}, {"Z-OUT", "-"},
-           {"D", "D"}, {"RESET-ZOOM", "0"}, {"ENTER", "ENTER"} };
+        {"R", "R"}, {"CMD-A", "A"}, {"FIND", "F"}, {"Z-IN", "+"}, {"Z-OUT", "-"},
+        {"D", "D"}, {"RESET-ZOOM", "0"}, {"ENTER", "ENTER"} };
 
     vector<string> cmd_needed = { "PASTE", "COPY", "CUT", "FIND",
         "CMD-A", "RESET-ZOOM", "Z-OUT", "Z-IN" };
@@ -530,6 +594,10 @@ void kb_gesture(vector<int> params) {
 
     if (click_count == 3) {
         mouse_mode = !mouse_mode;
+        if (mouse_mode) {
+            click_started = std::chrono::duration_cast< std::chrono::milliseconds
+                >(std::chrono::system_clock::now().time_since_epoch());
+        }
         click_count = 0;
     }
 }
