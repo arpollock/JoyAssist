@@ -540,6 +540,8 @@ void kb_mode_exec(vector<int> params) {
     depressed = clicked;
 }
 
+bool wait_on_click = false;
+
 void kb_gesture(vector<int> params) {
     double x = ((double)params.at(0)) / 1023.0;
     double y = ((double)params.at(1)) / 1023.0;
@@ -562,12 +564,14 @@ void kb_gesture(vector<int> params) {
         gesture_mode = false;
         depressed = true;
         click_count = 0;
+        wait_on_click = false;
     }
     else if (x > 0.5) {
         press_key("DELETE");
         gesture_mode = false;
         depressed = true;
         click_count = 0;
+        wait_on_click = false;
     }
     else if (y > 0.5) {
         gesture_mode = false;
@@ -576,6 +580,8 @@ void kb_gesture(vector<int> params) {
         shift_level++;
         if (shift_level > 3)
             shift_level = 0;
+
+        wait_on_click = false;
     }
     else if (y < 0.5) {
         shift_level--;
@@ -585,8 +591,24 @@ void kb_gesture(vector<int> params) {
         gesture_mode = false;
         depressed = true;
         click_count = 0;
+        wait_on_click = false;
     }
-    else {
+    else if (!wait_on_click) {
+        wait_on_click = true;
+        click_started = std::chrono::duration_cast< std::chrono::milliseconds
+            >(std::chrono::system_clock::now().time_since_epoch());
+    }
+
+    auto elapsed = std::chrono::duration_cast< std::chrono::milliseconds
+        >(std::chrono::system_clock::now().time_since_epoch()) - click_started;
+
+    if (elapsed.count() > 500 && wait_on_click) {
+        // use next letter
+        cout << "recommend" << endl;
+        gesture_mode = false;
+        return;
+    }
+    else if (elapsed.count() < 500) {
         if (!last_clicked && params.at(2) == 0) {
             click_count++;
         }
