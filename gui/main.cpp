@@ -216,6 +216,7 @@ int key_code_from_str(string c) {
     if (c == "m") { return 46; }
     if (c == ".") { return 47; }
     if (c == "TAB") { return 48; }
+    if (c == "tab") { return 48; }
     if (c == "SPACE") { return 49; }
     if (c == "`") { return 50; }
     if (c == "DELETE") { return 51; }
@@ -272,25 +273,19 @@ int key_code_from_str(string c) {
 
 int shift_level = 0;
 
-void press_compound(string compound) {
-    string commands[] = { "CUT", "COPY", "U", "PASTE", "TAB", "PREV", "NEXT",
-        "L", "R", "CMD-A", "FIND", "Z-IN", "Z-OUT", "D", "RESET-ZOOM", "ENTER"
-    };
-}
-
 void press_key(string s) {
     bool shift_key = (s == "!" || s == "@" || s == "#" || s == "$" || s == "%"
             || s == "^" || s == "&" || s == "*" || s == "(" || s == ")");
 
 
-    if (shift_level == 2) {
-        if (s == "u")
+    if (shift_level > 1) {
+        if (s == "U")
             s = "UP";
-        else if (s == "d")
+        else if (s == "D")
             s = "DOWN";
-        else if (s == "r")
+        else if (s == "R")
             s = "RIGHT";
-        else if (s == "l")
+        else if (s == "L")
             s = "LEFT";
     }
 
@@ -320,6 +315,54 @@ void press_key(string s) {
     CFRelease(shift_lift);
 }
 
+void press_compound(string compound) {
+    compound = to_upper(compound);
+    vector<pair<string, string>> commands = { {"CUT", "X"}, {"COPY", "C"} , {"U", "U"}, {"PASTE",
+        "V"}, {"TAB", "TAB"}, {"PREV", "TAB"}, {"NEXT", "TAB"}, {"L", "L"},
+           {"R", "R"}, {"CMD-A", "A"}, {"FIND", "F"}, {"Z-IN", "+"}, {"Z-OUT", "-"},
+           {"D", "D"}, {"RESET-ZOOM", "0"}, {"ENTER", "ENTER"} };
+
+    vector<string> cmd_needed = { "PASTE", "COPY", "CUT", "FIND",
+        "NEXT", "CMD-A", "PREV", "RESET-ZOOM", "Z-OUT", "Z-IN" };
+
+    bool use_command = false;
+
+    for (string word : cmd_needed) {
+        if (word == compound)
+            use_command = true;
+    }
+
+    if (!use_command) {
+        press_key(to_upper(compound));
+    }
+    else {
+		bool modSHIFT = (compound == "PREV");
+		string modkey = "";
+
+        for (pair<string,string> cmd : commands) {
+            if (compound == cmd.first) {
+                modkey = cmd.second;
+                break;
+            }
+        }
+        if (modkey == "")
+            return;
+
+		if (modSHIFT == 1) CGPostKeyboardEvent((CGCharCode)0, (CGKeyCode)56, true);
+
+		CGPostKeyboardEvent((CGCharCode)0, (CGKeyCode)55, true);
+
+		// post the keyboard event for the keystroke
+		CGPostKeyboardEvent((CGCharCode)0, (CGKeyCode)key_code_from_str(to_lower(modkey)), true);
+		CGPostKeyboardEvent((CGCharCode)0, (CGKeyCode)key_code_from_str(to_lower(modkey)), false);
+
+		// unset any modifiers
+		if (modSHIFT == 1) CGPostKeyboardEvent((CGCharCode)0, (CGKeyCode)56, false);
+		CGPostKeyboardEvent((CGCharCode)0, (CGKeyCode)55, false);
+    }
+
+    //CGEventRef shift_lift = CGEventCreateKeyboardEvent(NULL, (CGKeyCode)56, false);
+}
 
 int first_active = -1;
 char last_letter = '\0';
@@ -414,7 +457,10 @@ void kb_mode_exec(vector<int> params) {
         if (selection != "")
             last_letter = selection[0];
 
-        press_key(s);
+        if (shift_level < 3)
+            press_key(s);
+        else
+            press_compound(s);
     }
 
     depressed = clicked;
@@ -458,14 +504,10 @@ void kb_gesture(vector<int> params) {
             shift_level = 0;
     }
     else if (y < 0.5) {
-        if (last_letter != '\t') {
-            press_key("TAB");
-            last_letter = '\t';
-        }
-        else {
-            press_key("ENTER");
-            last_letter = '\n';
-        }
+        shift_level--;
+        if (shift_level < 0)
+            shift_level = 3;
+
         gesture_mode = false;
         depressed = true;
         click_count = 0;
