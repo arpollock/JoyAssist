@@ -113,10 +113,10 @@ void mouse_mode_exec(vector<int> params) {
 
     if (params.at(2) == 0 && !dragging) {
         // dragging
-        cout << x << " " << y << endl;
+        //cout << x << " " << y << endl;
         if (abs(x) >= 0.1 || abs(y) >= 0.1) {
             dragging = true;
-            cout << "Dragging" << MPOS_X << endl;
+            //cout << "Dragging" << MPOS_X << endl;
             CGEventRef left_click_down = CGEventCreateMouseEvent(
                     NULL, kCGEventLeftMouseDown,
                     CGPointMake(MPOS_X, MPOS_Y),
@@ -126,7 +126,7 @@ void mouse_mode_exec(vector<int> params) {
             CGEventPost(kCGHIDEventTap, left_click_down);
             CFRelease(left_click_down);
 
-            cout << "Put Down  " << 0 << endl;
+            //cout << "Put Down  " << 0 << endl;
         }
     }
 
@@ -147,7 +147,7 @@ void mouse_mode_exec(vector<int> params) {
 
     // depressed
     if (last_clicked && params.at(2) != 0) {
-        cout << "Depressed" << endl;
+        //cout << "Depressed" << endl;
         auto elapsed = std::chrono::duration_cast< std::chrono::milliseconds
             >(std::chrono::system_clock::now().time_since_epoch()) - click_started;
 
@@ -156,8 +156,9 @@ void mouse_mode_exec(vector<int> params) {
         CGMouseButton m_button  = kCGMouseButtonLeft;
         bool right_click = false;
 
-        if (elapsed.count() > 500) {
-            if (abs(last_x - MPOS_X) < 20 && abs(last_y - MPOS_Y) < 20) {
+        //cout << elapsed.count() << endl;
+        if (elapsed.count() > 320) {
+            if (!dragging) {
                 right_click = true;
                 click_in = kCGEventRightMouseDown;
                 click_out = kCGEventRightMouseUp;
@@ -176,7 +177,7 @@ void mouse_mode_exec(vector<int> params) {
             CGEventPost(kCGHIDEventTap, left_click_up);
             CFRelease(left_click_up);
             std::this_thread::sleep_for(std::chrono::milliseconds(20));
-            cout << "Let Up  " << 0 << endl;
+            //cout << "Let Up  " << 0 << endl;
         }
 
         // press mouse button
@@ -189,7 +190,7 @@ void mouse_mode_exec(vector<int> params) {
         CGEventPost(kCGHIDEventTap, click_down);
         CFRelease(click_down);
 
-        cout << "Put Down  " << right_click << endl;
+        //cout << "Put Down  " << right_click << endl;
 
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         // release mouse button
@@ -201,7 +202,7 @@ void mouse_mode_exec(vector<int> params) {
 
         CGEventPost(kCGHIDEventTap, click_up);
         CFRelease(click_up);
-        cout << "Let Up  " << right_click << endl;
+        //cout << "Let Up  " << right_click << endl;
 
         last_x = MPOS_X;
         last_y = MPOS_Y;
