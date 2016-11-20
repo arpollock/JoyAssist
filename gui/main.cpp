@@ -272,6 +272,12 @@ int key_code_from_str(string c) {
 
 int shift_level = 0;
 
+void press_compound(string compound) {
+    string commands[] = { "CUT", "COPY", "U", "PASTE", "TAB", "PREV", "NEXT",
+        "L", "R", "CMD-A", "FIND", "Z-IN", "Z-OUT", "D", "RESET-ZOOM", "ENTER"
+    };
+}
+
 void press_key(string s) {
     bool shift_key = (s == "!" || s == "@" || s == "#" || s == "$" || s == "%"
             || s == "^" || s == "&" || s == "*" || s == "(" || s == ")");
@@ -334,16 +340,22 @@ void kb_mode_exec(vector<int> params) {
 
     bool clicked = (params.at(2) == 0);
 
-    string row1 = "EDCBAZYX";
-    string col1 = "JIHGF";
-    string col2 = "STUVW";
-    string row2 = "KLMNOPQR";
+    vector<string> row1 = { "E", "D", "C", "B", "A", "Z", "Y", "X" };
+    vector<string> col1 = { "J", "I", "H", "G", "F" };
+    vector<string> col2 = { "S", "T", "U", "V", "W" };
+    vector<string> row2 = { "K", "L", "M", "N", "O", "P", "Q", "R" };
 
-    if (shift_level > 1) {
-        row1 = "09876U54321";
-        col1 = ")!?R,.";
-        col2 = "+-=L\"'";
-        row2 = "(@$D&/#";
+    if (shift_level == 2) {
+        row1 = { "0", "9", "8", "7", "6", "U", "5", "4", "3", "2", "1" };
+        col1 = { ")", "!", "?", "R", ",", "." };
+        col2 = { "+", "-", "=", "L", "\\", "\"", "'" };
+        row2 = { "(", "@", "$", "D", "&", "/", "#" };
+    }
+    else if (shift_level == 3) {
+        row1 = { "TAB", "PASTE", "U", "COPY", "CUT" };
+        col1 = { "FIND", "R", "NEXT" };
+        col2 = { "CMD-A", "L", "PREV" };
+        row2 = { "ENTER", "RESET-ZOOM", "Z-OUT", "Z-IN" };
     }
 
     double x = ((double)params.at(0)) / 1023.0;
@@ -366,8 +378,8 @@ void kb_mode_exec(vector<int> params) {
         }
     }
 
-    char selection = '\0';
-    string use_me = "";
+    string selection = "";
+    vector<string> use_me;
     double use_axis = 0;
 
     // use columns, x was moved first
@@ -390,17 +402,17 @@ void kb_mode_exec(vector<int> params) {
     }
 
     if (first_active != -1) {
-        selection = use_me[round((use_me.length()-1) * use_axis)];
+        selection = use_me[round((use_me.size()-1) * use_axis)];
     }
     select_ascii(selection, shift_level);
 
 
-    string s(1, tolower(selection));
+    string s = to_lower(selection);
 
     cout << "SHIFT " << ((shift_level == 1) ? "ON" : "OFF") << endl;
     if (clicked && !depressed) {
-        if (selection != '\0')
-            last_letter = selection;
+        if (selection != "")
+            last_letter = selection[0];
 
         press_key(s);
     }
@@ -442,7 +454,7 @@ void kb_gesture(vector<int> params) {
         depressed = true;
         click_count = 0;
         shift_level++;
-        if (shift_level > 2)
+        if (shift_level > 3)
             shift_level = 0;
     }
     else if (y < 0.5) {

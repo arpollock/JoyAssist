@@ -50,6 +50,28 @@ L                                     R
    #    /    &    D    $    @    (
 )";
 
+string circle_3 = R"(
+ CUT     COPY      U      PASTE     TAB
+
+
+
+PREV                                NEXT
+
+
+
+
+L                                      R
+
+
+
+
+CMD-A                               FIND
+
+
+
+  Z-IN    Z-OUT    D  RESET-ZOOM   ENTER
+)";
+
 const char* RESET = "\033[0m";
 const char* BOLD = "\033[4m";
 const char* RED = "\033[31m";
@@ -60,40 +82,66 @@ const char* YELLOW = "\033[33m";
 
 char last_letter_visual = ' ';
 
-void select_ascii(char c, int shift_level) {
+string to_upper(string str) {
+    string new_str = "";
+    for (char c : str) {
+        new_str += toupper(c);
+    }
+    return new_str;
+}
+
+string to_lower(string str) {
+    string new_str = "";
+    for (char c : str) {
+        new_str += tolower(c);
+    }
+    return new_str;
+}
+
+void select_ascii(string select_str, int shift_level) {
     string orig_circle = circle;
-    if (shift_level > 1) {
+
+    if (shift_level == 2) {
         orig_circle = circle_symbols;
     }
+    if (shift_level == 3) {
+        orig_circle = circle_3;
+    }
 
-    string new_circle;
+    string new_circle = "";
+    string find_str = "";
 
     for (char find : orig_circle) {
-        if (find == toupper(c) && c != ' ') {
+        find_str += find;
+
+        if (find_str == select_str) {
             new_circle += RED;
             //new_circle += BOLD;
             if (shift_level == 0) {
-                new_circle += tolower(find);
+                new_circle += to_lower(find_str);
             }
             else {
-                new_circle += find;
+                new_circle += find_str;
             }
             new_circle += RESET;
-            last_letter_visual = find;
+            find_str = "";
+            //last_letter_visual = find;
+        }
+        else if (find == ' ' || find == '\n') {
+            if (shift_level == 0)
+                new_circle += to_lower(find_str);
+            else
+                new_circle += to_upper(find_str);
+
+            find_str = "";
         }
         else if (find == '_') {
-            if (c == ' ')
+            if (select_str == "")
                 new_circle += last_letter_visual;
-            else
-                new_circle += toupper(c);
-        }
-        else {
-            if (shift_level == 0) {
-                new_circle += tolower(find);
-            }
-            else {
-                new_circle += find;
-            }
+            //else
+                //new_circle += toupper(c);
+
+            find_str = "";
         }
     }
 
